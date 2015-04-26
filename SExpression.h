@@ -15,6 +15,11 @@ public:
 
   std::shared_ptr<LispObject> first() const;
   std::shared_ptr<LispObject> second() const;
+
+  // LispObject interface
+public:
+  virtual void print(std::ostream& out) const override;
+  virtual ~SExpression();
 };
 
 class InvalidSExpression : public InvalidLispObject {

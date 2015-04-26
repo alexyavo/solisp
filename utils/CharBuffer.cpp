@@ -11,11 +11,13 @@ CharBuffer::CharBuffer(const std::string& str) : m_str(&str), m_pos(0) {}
 CharBuffer::CharBuffer(const char *str) : m_str(new std::string(str)), m_pos(0) {}
 
 const char& CharBuffer::read() {
-    return get_char(true);
+  assert_has_remaining();
+  return m_str->at(m_pos++);
 }
 
-const char& CharBuffer::peek() {
-  return get_char(false);
+const char& CharBuffer::peek() const {
+  assert_has_remaining();
+  return m_str->at(m_pos);
 }
 
 void CharBuffer::set_position(size_t pos) {
@@ -34,10 +36,10 @@ size_t CharBuffer::position() const {
 }
 
 void CharBuffer::skip_whitespace() {
-  m_pos =
-      std::find_if(m_str->begin() + m_pos, m_str->end(),
+  m_pos = (size_t)
+      (std::find_if(m_str->begin() + m_pos, m_str->end(),
                    std::not1(std::ptr_fun<int, int>(std::isspace)))
-      - m_str->begin();
+       - m_str->begin());
 }
 
 const std::string& CharBuffer::get_str() const {
@@ -48,11 +50,9 @@ std::string CharBuffer::get_remaining_str() const {
   return m_str->substr(m_pos, m_str->length());
 }
 
-const char& CharBuffer::get_char(bool incPos) {
+void CharBuffer::assert_has_remaining() const {
   if (!has_remaining())
     throw BufferUnderflowException();
-
-  return incPos ? m_str->at(m_pos++) : m_str->at(m_pos);
 }
 
 }

@@ -15,4 +15,16 @@ std::shared_ptr<LispObject> SExpression::second() const {
   return m_second;
 }
 
+SExpression::~SExpression() {
+
+}
+
+void SExpression::print(std::ostream& out) const {
+  out << "(";
+  m_first->print(out);
+  out << " . ";
+  m_second->print(out);
+  out << ")";
+}
+
 }

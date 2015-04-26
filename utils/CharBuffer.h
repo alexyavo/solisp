@@ -16,7 +16,7 @@ public:
   CharBuffer(const std::string& str);
 
   virtual const char& read() override;
-  virtual const char& peek() override;
+  virtual const char& peek() const override;
   virtual void set_position(size_t pos) override;
   virtual size_t remaining() const override;
   virtual size_t position() const override;
@@ -26,8 +26,23 @@ public:
   const std::string& get_str() const;
   std::string get_remaining_str() const;
 
+  /*
+   * Reads string until pred returns false or buffer runs
+   * out of characters.
+   */
+  template<typename Func>
+  std::string read_until(const Func& pred);
+
 private:
-  const char& get_char(bool incPos);
+  void assert_has_remaining() const;
 };
+
+template<typename Func>
+std::string CharBuffer::read_until(Func const& pred) {
+  std::string result {""};
+  while (has_remaining() && pred(*this))
+    result.append(1, read());
+  return result;
+}
 
 }

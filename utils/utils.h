@@ -8,14 +8,14 @@
 
 namespace utils {
 
-template<typename Base, typename T>
-bool instance_of(const T* obj) {
-  return dynamic_cast<const Base *>(obj) != nullptr;
+template<typename DynamicType, typename StaticType>
+bool instance_of(const StaticType* obj) {
+  return dynamic_cast<const DynamicType *>(obj) != nullptr;
 }
 
-template<typename Base, typename T>
-bool instance_of(std::shared_ptr<T> obj) {
-  return dynamic_cast<const Base *>(obj.get()) != nullptr;
+template<typename DynamicType, typename StaticType>
+bool instance_of(std::shared_ptr<StaticType> obj) {
+  return std::dynamic_pointer_cast<const DynamicType>(obj) != nullptr;
 }
 
 std::string& remove_leading_whitespace(std::string& str);

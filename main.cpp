@@ -5,8 +5,8 @@
 #include "utils/utils.h"
 #include "Atom.h"
 #include "Parser.h"
-#include "SExpression.h"
 #include "Interpreter.h"
+#include "elementary_functions.h"
 
 #define log_dbg(str) std::cout << str << std::endl
 
@@ -70,6 +70,13 @@ void TEST_CharBuffer() {
   buff.reset();
   assert(buff.remaining() == test.length());
   buff.set_position(buff.remaining() - 2);
+
+  {
+    CharBuffer buff("alex");
+    buff.read_until([] (const CharBuffer& buff) {
+      return buff.peek() != 'e';
+    });
+  }
 }
 
 void run_tests() {
@@ -79,15 +86,6 @@ void run_tests() {
 }
 
 }
-}
-
-namespace solisp { namespace tests{
-
-}
-
-
-
-
 }
 
 namespace solisp {
@@ -129,9 +127,9 @@ void TEST_Atom() {
   Atom good0("BLABLA");
   Atom good1("BLA22AB");
 
-  assert(good0.eq(good1) == false);
-  assert(Atom("BLA").eq(Atom("BLA")));
-  assert(Atom("BLA").eq(Atom("BLA2")) == false);
+  assert(good0 != good1);
+  assert(Atom("BLA") == Atom("BLA"));
+  assert(Atom("BLA") != Atom("BLA2"));
 }
 
 void assert_invalid_sexp(const string& sexp) {
@@ -144,11 +142,11 @@ void assert_invalid_sexp(const string& sexp) {
   }
 }
 
-void TEST_SExpressionParsing() {
+void TEST_SExpressionStrictParsing() {
   assert_invalid_sexp("k");
   assert_invalid_sexp("(FJFJfKK.F)");
 
-  Parser parser;
+  Parser parser(true);
   {
     auto lobj = parser.parse(utils::CharBuffer("(A.A)"));
     assert(utils::instance_of<SExpression>(lobj.get()));
@@ -167,6 +165,40 @@ void TEST_SExpressionParsing() {
     auto lobj = parser.parse(utils::CharBuffer("T"));
     assert(utils::instance_of<Atom>(lobj));
   }
+
+  assert_invalid_sexp("((A1 . A2) . B");
+
+  parser.parse(utils::CharBuffer("(A . (B .C))"));
+  parser.parse(utils::CharBuffer("((A1 . A2) . B)"));
+  parser.parse(utils::CharBuffer("((U .V) . (X. Y))"));
+}
+
+void TEST_SExpressionListNotationParsing() {
+  Parser parser;
+  parser.parse(utils::CharBuffer("(A B C)"));
+  parser.parse(utils::CharBuffer("((A B) C)"));
+  parser.parse(utils::CharBuffer("(A B (C D))"));
+  parser.parse(utils::CharBuffer("(A)"));
+  parser.parse(utils::CharBuffer("((A))"));
+  parser.parse(utils::CharBuffer("(A (B .C ))"));
+}
+
+void TEST_elementary_functions() {
+  Parser p;
+  auto atom0 = std::make_shared<Atom>("A0");
+  auto atom1 = std::make_shared<Atom>("A1");
+  auto atom2 = std::make_shared<Atom>("A2");
+  auto atom3 = std::make_shared<Atom>("A3");
+
+  first(*cons(atom3, cons(atom0, atom1)));
+  rest(*cons(atom2, atom1));
+  assert(eq(*atom0, *atom0));
+  assert(eq(*atom0, Atom("A0")));
+  assert(eq(*atom0, *atom1) == false);
+  assert(eq(*atom0, Atom("A0IIII")) == false);
+
+  assert(atom(*atom0));
+  assert(atom(*cons(atom0, atom1)) == false);
 }
 
 void TEST_Interperter() {
@@ -177,12 +209,36 @@ void run_tests() {
   log_dbg("=== Running solisp tests === ");
   RUN_TEST(is_valid_atom);
   RUN_TEST(Atom);
-  RUN_TEST(SExpressionParsing);
+  RUN_TEST(SExpressionStrictParsing);
+  RUN_TEST(SExpressionListNotationParsing);
   RUN_TEST(Interperter);
+  RUN_TEST(elementary_functions);
 }
 
-}
-}
+}}
+
+/*
+ * symbol
+ * define, defconst
+ * apply searches symbols plist before going over the alist supplide as argument.
+ * this alist contains the variable bindings - (e.g. "X" is actually "A" in this invocation)
+ *
+ * most functions are basically constants
+ *
+ * eval, apply, evalquote
+ * evcon (is the implementatoin of COND that evaluates the arguments in correct order)
+ *
+ * what properties do atomic symbols have?
+ * - PNAME: print name of the atomic symbol
+ * - EXPR: sexp that defines the functions that is bound to the atomic symbol
+ * - SUBR: assembly definition of function
+ * - APVAL: permanent value for the atomic symbol considered as variable
+ *
+ *
+ *
+ * special forms:
+ * COND,
+ */
 
 int main() {
   utils::tests::run_tests();

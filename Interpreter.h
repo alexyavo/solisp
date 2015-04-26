@@ -18,7 +18,8 @@ public:
 
 private:
   std::string read();
-  void eval(const std::string& input);
+  std::shared_ptr<LispObject> eval(const std::string& input);
+  void print(const LispObject& obj);
 };
 
 }
